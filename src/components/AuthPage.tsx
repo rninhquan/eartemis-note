@@ -10,7 +10,7 @@ export default function AuthPage() {
         </div>
         <h1 className="font-bold text-3xl tracking-tight mb-3">EA NOTE</h1>
         <p className="text-slate-500 mb-8 leading-relaxed">
-          Ghi chú, dịch thuật theo ngữ cảnh và ôn tập từ vựng tiếng Anh thông minh với sức mạnh của AI.
+          Ghi chú, dịch thuật theo ngữ cảnh và ôn tập từ vựng tiếng Anh.
         </p>
         
         <button 
