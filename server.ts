@@ -76,7 +76,7 @@ async function startServer() {
       while (retries > 0) {
         try {
           response = await ai.models.generateContent({
-            model: "gemini-3.6-flash",
+            model: "gemini-3.1-flash-lite",
             contents: prompt,
             config: {
               responseMimeType: "application/json",
