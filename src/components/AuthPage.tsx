@@ -8,7 +8,7 @@ export default function AuthPage() {
         <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center mb-6 shadow-md shadow-indigo-200">
           <BookOpen className="w-8 h-8 text-white" />
         </div>
-        <h1 className="font-bold text-3xl tracking-tight mb-3">EA NOTE</h1>
+        <h1 className="font-bold text-3xl tracking-tight mb-3">Eatermis Note</h1>
         <p className="text-slate-500 mb-8 leading-relaxed">
           Ghi chú, dịch thuật theo ngữ cảnh và ôn tập từ vựng tiếng Anh.
         </p>
