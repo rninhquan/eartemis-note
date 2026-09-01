@@ -2,17 +2,17 @@ import { useState, useEffect } from 'react';
 import { User } from 'firebase/auth';
 import { logout, getUserNotes, saveNote, deleteNote, updateNote } from '../lib/firebase';
 import { SentenceNote } from '../types';
-import { LogOut, Tag as TagIcon, Calendar, Search, X, Trash2, Brain, CheckCircle2, Volume2 } from 'lucide-react';
+import { LogOut, Tag as TagIcon, Calendar, Search, X, Trash2, Brain, CheckCircle2, Volume2, Gauge } from 'lucide-react';
 
 // ==========================================
 // 1. HÀM XỬ LÝ ÂM THANH (Web Speech API)
 // ==========================================
-const playAudio = (text: string, lang: string = 'en-US') => {
+const playAudio = (text: string, lang: string = 'en-US', rate: number = 1) => {
   if ('speechSynthesis' in window) {
     window.speechSynthesis.cancel(); // Hủy âm thanh đang đọc dở
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = lang;
-    utterance.rate = 1;
+    utterance.rate = rate; // Áp dụng tốc độ đã chọn
     window.speechSynthesis.speak(utterance);
   }
 };
@@ -20,17 +20,25 @@ const playAudio = (text: string, lang: string = 'en-US') => {
 // ==========================================
 // 2. COMPONENT NÚT CÁI LOA
 // ==========================================
-const SpeakButton = ({ text, lang = 'en-US' }: { text: string, lang?: string }) => {
+const SpeakButton = ({ 
+  text, 
+  lang = 'en-US', 
+  rate = 1 
+}: { 
+  text: string; 
+  lang?: string; 
+  rate?: number; 
+}) => {
   return (
     <button
       type="button"
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
-        playAudio(text, lang);
+        playAudio(text, lang, rate);
       }}
-      className="inline-flex items-center justify-center p-1.5 ml-2 text-indigo-400 hover:text-indigo-600 hover:bg-indigo-100 rounded-full transition-colors focus:outline-none"
-      title="Nghe phát âm"
+      className="inline-flex items-center justify-center p-1.5 ml-2 text-indigo-400 hover:text-indigo-600 hover:bg-indigo-100 rounded-full transition-colors focus:outline-none shrink-0"
+      title={`Nghe phát âm (${rate}x)`}
     >
       <Volume2 size={20} />
     </button>
@@ -49,10 +57,22 @@ export default function MainLayout({ user }: MainLayoutProps) {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+
+  // Tốc độ phát âm (lấy từ localStorage hoặc mặc định là 1.0)
+  const [speechRate, setSpeechRate] = useState<number>(() => {
+    const savedRate = localStorage.getItem('ea_speech_rate');
+    return savedRate ? parseFloat(savedRate) : 1.0;
+  });
   
   // Review Mode states
   const [isReviewMode, setIsReviewMode] = useState(false);
   const [showAnswer, setShowAnswer] = useState(false);
+
+  // Lưu tốc độ đọc vào localStorage khi thay đổi
+  const handleRateChange = (newRate: number) => {
+    setSpeechRate(newRate);
+    localStorage.setItem('ea_speech_rate', newRate.toString());
+  };
 
   // Calculate unique tags
   const allTags = Array.from(new Set(notes.flatMap(n => n.tags || []))).sort();
@@ -301,7 +321,26 @@ export default function MainLayout({ user }: MainLayoutProps) {
           {error && <p className="text-red-500 text-xs mt-1 absolute">{error}</p>}
         </div>
 
-        <div className="flex items-center gap-4 text-slate-500">
+        <div className="flex items-center gap-3 text-slate-500">
+          {/* Bộ chọn tốc độ đọc TTS */}
+          <div className="flex items-center gap-1 bg-slate-100 px-3 py-1.5 rounded-full text-xs font-medium border border-slate-200">
+            <Gauge className="w-3.5 h-3.5 text-indigo-600" />
+            <span className="text-slate-500 hidden sm:inline">Tốc độ:</span>
+            <select
+              value={speechRate}
+              onChange={(e) => handleRateChange(parseFloat(e.target.value))}
+              className="bg-transparent text-indigo-700 font-bold outline-none cursor-pointer text-xs"
+              title="Chọn tốc độ phát âm"
+            >
+              <option value={0.5}>0.5x (Chậm)</option>
+              <option value={0.75}>0.75x</option>
+              <option value={1.0}>1.0x (Chuẩn)</option>
+              <option value={1.25}>1.25x</option>
+              <option value={1.5}>1.5x (Nhanh)</option>
+              <option value={2.0}>2.0x</option>
+            </select>
+          </div>
+
           <button 
             onClick={() => setIsReviewMode(!isReviewMode)}
             className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium text-sm transition-colors ${
@@ -349,10 +388,10 @@ export default function MainLayout({ user }: MainLayoutProps) {
                     Còn {dueNotes.length} câu cần ôn
                   </span>
                   
-                  {/* --- ĐÃ THÊM NÚT LOA Ở ĐÂY --- */}
-                  <h2 className="text-4xl font-light text-slate-800 leading-tight flex items-center justify-center">
-                    {dueNotes[0].originalSentence}
-                    <SpeakButton text={dueNotes[0].originalSentence} />
+                  {/* Nút loa cho câu trong chế độ ôn tập */}
+                  <h2 className="text-4xl font-light text-slate-800 leading-tight flex items-center justify-center flex-wrap gap-2">
+                    <span>{dueNotes[0].originalSentence}</span>
+                    <SpeakButton text={dueNotes[0].originalSentence} rate={speechRate} />
                   </h2>
                 </div>
                 
@@ -370,11 +409,11 @@ export default function MainLayout({ user }: MainLayoutProps) {
                       {dueNotes[0].words && dueNotes[0].words.length > 0 && (
                          <div className="mb-6 space-y-3">
                            {dueNotes[0].words.map((w, idx) => (
-                             <div key={idx} className="flex items-baseline gap-2">
-                               {/* --- ĐÃ THÊM NÚT LOA Ở ĐÂY --- */}
+                             <div key={idx} className="flex items-center gap-2">
+                               {/* Nút loa cho từng từ vựng trong chế độ ôn tập */}
                                <span className="font-bold text-slate-800 flex items-center">
                                  {w.originalWord}
-                                 <SpeakButton text={w.originalWord} />
+                                 <SpeakButton text={w.originalWord} rate={speechRate} />
                                </span>
                                <span className="text-[10px] uppercase font-mono text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">{w.partOfSpeech}</span>
                                <span className="text-slate-600 text-sm ml-2">- {w.contextualMeaning}</span>
@@ -508,10 +547,10 @@ export default function MainLayout({ user }: MainLayoutProps) {
                   <div>
                     <span className="text-xs font-bold text-indigo-600 uppercase tracking-widest">Câu đang chọn</span>
                     
-                    {/* --- ĐÃ THÊM NÚT LOA Ở ĐÂY --- */}
-                    <h2 className="text-3xl font-light mt-2 flex items-center">
-                      {selectedNote.originalSentence}
-                      <SpeakButton text={selectedNote.originalSentence} />
+                    {/* Nút loa cho câu đang chọn */}
+                    <h2 className="text-3xl font-light mt-2 flex items-center flex-wrap gap-2">
+                      <span>{selectedNote.originalSentence}</span>
+                      <SpeakButton text={selectedNote.originalSentence} rate={speechRate} />
                     </h2>
                     
                     <p className="text-xl text-slate-500 italic mt-1">{selectedNote.sentenceTranslation}</p>
@@ -562,10 +601,10 @@ export default function MainLayout({ user }: MainLayoutProps) {
                             <div className="flex justify-between items-center mb-1">
                               
                               <div className="flex items-center gap-2">
-                                {/* --- ĐÃ THÊM NÚT LOA Ở ĐÂY --- */}
+                                {/* Nút loa cho từng từ vựng */}
                                 <span className="font-bold text-indigo-600 text-lg flex items-center">
                                   {word.originalWord}
-                                  <SpeakButton text={word.originalWord} />
+                                  <SpeakButton text={word.originalWord} rate={speechRate} />
                                 </span>
                                 
                                 {word.originalWord.toLowerCase() !== word.baseWord.toLowerCase() && (
