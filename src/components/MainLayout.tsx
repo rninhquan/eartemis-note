@@ -2,7 +2,40 @@ import { useState, useEffect } from 'react';
 import { User } from 'firebase/auth';
 import { logout, getUserNotes, saveNote, deleteNote, updateNote } from '../lib/firebase';
 import { SentenceNote } from '../types';
-import { LogOut, Tag as TagIcon, Calendar, Search, X, Trash2, Brain, CheckCircle2 } from 'lucide-react';
+import { LogOut, Tag as TagIcon, Calendar, Search, X, Trash2, Brain, CheckCircle2, Volume2 } from 'lucide-react';
+
+// ==========================================
+// 1. HÀM XỬ LÝ ÂM THANH (Web Speech API)
+// ==========================================
+const playAudio = (text: string, lang: string = 'en-US') => {
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel(); // Hủy âm thanh đang đọc dở
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = lang;
+    utterance.rate = 1;
+    window.speechSynthesis.speak(utterance);
+  }
+};
+
+// ==========================================
+// 2. COMPONENT NÚT CÁI LOA
+// ==========================================
+const SpeakButton = ({ text, lang = 'en-US' }: { text: string, lang?: string }) => {
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        playAudio(text, lang);
+      }}
+      className="inline-flex items-center justify-center p-1.5 ml-2 text-indigo-400 hover:text-indigo-600 hover:bg-indigo-100 rounded-full transition-colors focus:outline-none"
+      title="Nghe phát âm"
+    >
+      <Volume2 size={20} />
+    </button>
+  );
+};
 
 interface MainLayoutProps {
   user: User;
@@ -244,7 +277,7 @@ export default function MainLayout({ user }: MainLayoutProps) {
           <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
             <div className="w-4 h-4 border-2 border-white rounded-sm"></div>
           </div>
-          <h1 className="font-bold text-xl tracking-tight">Eatermis Note</h1>
+          <h1 className="font-bold text-xl tracking-tight">EA NOTE</h1>
         </div>
         
         <div className="flex-1 max-w-2xl px-12">
@@ -315,8 +348,11 @@ export default function MainLayout({ user }: MainLayoutProps) {
                   <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-6">
                     Còn {dueNotes.length} câu cần ôn
                   </span>
-                  <h2 className="text-4xl font-light text-slate-800 leading-tight">
+                  
+                  {/* --- ĐÃ THÊM NÚT LOA Ở ĐÂY --- */}
+                  <h2 className="text-4xl font-light text-slate-800 leading-tight flex items-center justify-center">
                     {dueNotes[0].originalSentence}
+                    <SpeakButton text={dueNotes[0].originalSentence} />
                   </h2>
                 </div>
                 
@@ -335,7 +371,11 @@ export default function MainLayout({ user }: MainLayoutProps) {
                          <div className="mb-6 space-y-3">
                            {dueNotes[0].words.map((w, idx) => (
                              <div key={idx} className="flex items-baseline gap-2">
-                               <span className="font-bold text-slate-800">{w.originalWord}</span>
+                               {/* --- ĐÃ THÊM NÚT LOA Ở ĐÂY --- */}
+                               <span className="font-bold text-slate-800 flex items-center">
+                                 {w.originalWord}
+                                 <SpeakButton text={w.originalWord} />
+                               </span>
                                <span className="text-[10px] uppercase font-mono text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">{w.partOfSpeech}</span>
                                <span className="text-slate-600 text-sm ml-2">- {w.contextualMeaning}</span>
                              </div>
@@ -467,7 +507,13 @@ export default function MainLayout({ user }: MainLayoutProps) {
                 <div className="flex justify-between items-start">
                   <div>
                     <span className="text-xs font-bold text-indigo-600 uppercase tracking-widest">Câu đang chọn</span>
-                    <h2 className="text-3xl font-light mt-2">{selectedNote.originalSentence}</h2>
+                    
+                    {/* --- ĐÃ THÊM NÚT LOA Ở ĐÂY --- */}
+                    <h2 className="text-3xl font-light mt-2 flex items-center">
+                      {selectedNote.originalSentence}
+                      <SpeakButton text={selectedNote.originalSentence} />
+                    </h2>
+                    
                     <p className="text-xl text-slate-500 italic mt-1">{selectedNote.sentenceTranslation}</p>
                   </div>
                   <button 
@@ -514,8 +560,14 @@ export default function MainLayout({ user }: MainLayoutProps) {
                         {selectedNote.words.map((word, idx) => (
                           <div key={idx} className="p-4 bg-slate-50 rounded-xl border border-slate-100">
                             <div className="flex justify-between items-center mb-1">
+                              
                               <div className="flex items-center gap-2">
-                                <span className="font-bold text-indigo-600 text-lg">{word.originalWord}</span>
+                                {/* --- ĐÃ THÊM NÚT LOA Ở ĐÂY --- */}
+                                <span className="font-bold text-indigo-600 text-lg flex items-center">
+                                  {word.originalWord}
+                                  <SpeakButton text={word.originalWord} />
+                                </span>
+                                
                                 {word.originalWord.toLowerCase() !== word.baseWord.toLowerCase() && (
                                   <span className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-100 italic">
                                     dạng nguyên thể: <strong>{word.baseWord}</strong>
