@@ -277,7 +277,7 @@ export default function MainLayout({ user }: MainLayoutProps) {
           <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
             <div className="w-4 h-4 border-2 border-white rounded-sm"></div>
           </div>
-          <h1 className="font-bold text-xl tracking-tight">EA NOTE</h1>
+          <h1 className="font-bold text-xl tracking-tight">EArtemis Note</h1>
         </div>
         
         <div className="flex-1 max-w-2xl px-12">
