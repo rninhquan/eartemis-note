@@ -294,9 +294,9 @@ export default function MainLayout({ user }: MainLayoutProps) {
     <div className="flex flex-col h-screen w-full bg-[#F1F5F9] text-slate-900 font-sans overflow-hidden">
       <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-            <div className="w-4 h-4 border-2 border-white rounded-sm"></div>
-          </div>
+          {/* Logo đã được thay bằng thẻ img trỏ tới file logo.png trong thư mục public */}
+          <img src="/logo.png" alt="EArtemis Note Logo" className="w-8 h-8 rounded-lg object-contain" />
+          
           <h1 className="font-bold text-xl tracking-tight">EArtemis Note</h1>
         </div>
         
